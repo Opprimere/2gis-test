@@ -8,14 +8,10 @@ class TestRegions(unittest.TestCase):
 
 #тест 1 - количество элементов на странице по умолчанию
     def test_page_size_count(self):
-        try:
-            res = request.urlopen('https://regions-test.2gis.com/1.0/regions?q')
-        except urllib.error.HTTPError as e:
-            print(e.getcode())
-
-        # body = json.loads(res.read().decode('utf-8'))
-        # if body['total'] >= 15:
-        #     self.assertEqual(len(body['items']), 15)
+        res = request.urlopen('https://regions-test.2gis.com/1.0/regions')
+        body = json.loads(res.read().decode('utf-8'))
+        if body['total'] >= 15:
+            self.assertEqual(len(body['items']), 15)
 
 #тест 2 - проверка,что страница по умолчанию - первая
     def test_page(self):
