@@ -1,16 +1,21 @@
 import json
 import unittest
 import urllib.parse
+import urllib.error
 from urllib import request
 
 class TestRegions(unittest.TestCase):
 
 #тест 1 - количество элементов на странице по умолчанию
     def test_page_size_count(self):
-        res = request.urlopen('https://regions-test.2gis.com/1.0/regions')
-        body = json.loads(res.read().decode('utf-8'))
-        if body['total'] >= 15:
-            self.assertEqual(len(body['items']), 15)
+        try:
+            res = request.urlopen('https://regions-test.2gis.com/1.0/regions?q')
+        except urllib.error.HTTPError as e:
+            print(e.getcode())
+
+        # body = json.loads(res.read().decode('utf-8'))
+        # if body['total'] >= 15:
+        #     self.assertEqual(len(body['items']), 15)
 
 #тест 2 - проверка,что страница по умолчанию - первая
     def test_page(self):
@@ -79,5 +84,54 @@ class TestRegions(unittest.TestCase):
                 i += 1
             else:
                 break
+
+#тест 6 - проверка ответа сервера при некорректном вводе параметров
+    def test_incorrect_parametr(self):
+        res = request.urlopen('https://regions-test.2gis.com/1.0/regions?country_code=251')
+        self.assertEqual(res.getcode(), 400)
+
+        res1 = request.urlopen('https://regions-test.2gis.com/1.0/regions?page=2.5')
+        self.assertEqual(res1.getcode(), 400)
+
+        term = urllib.parse.quote("ск")
+        res = request.urlopen('https://regions-test.2gis.com/1.0/regions?q=' + term)
+        self.assertEqual(res.getcode(), 400)
+
+        res = request.urlopen('https://regions-test.2gis.com/1.0/regions?page_size=4')
+        self.assertEqual(res.getcode(), 400)
+
+#тест 7 - проверка параметра q при пустом значении
+    def test_empty_querry(self):
+        try:
+            res = request.urlopen('https://regions-test.2gis.com/1.0/regions?q=')
+            self.assertEqual(res.getcode(), 400)
+        except urllib.error.HTTPError as error:
+            self.assertEqual(error.getcode(), 400)
+
+#тест 8 - проверка параметра page при значении 0
+    def test_page_zero(self):
+
+        try:
+            res = request.urlopen('https://regions-test.2gis.com/1.0/regions?page=0')
+            self.assertEqual(res.getcode(), 400)
+        except urllib.error.HTTPError as error:
+            self.assertEqual(error.getcode(), 400)
+
+#тест 9 - проверка, все ли города можно найти с помощью параметра q
+    def test_all_cities_query(self):
+        i = 1
+
+        while True:
+            res = request.urlopen('https://regions-test.2gis.com/1.0/regions?page=' + str(i))
+            body = json.loads(res.read().decode('utf-8'))
+
+            for region in body['items']:
+                self.assertTrue(len(region['name']) >= 3)
+
+            if len(body['items']) > 0:
+                i += 1
+            else:
+                break
+
 
 
